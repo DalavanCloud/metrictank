@@ -41,17 +41,15 @@ func printChunkSummary(ctx context.Context, store *cassandra.CassandraStore, tab
 func printChunkCsv(ctx context.Context, store *cassandra.CassandraStore, table cassandra.Table, metrics []Metric, start, end uint32) {
 
 	// see CassandraStore.SearchTable for more information
-	start_month := start - (start % cassandra.Month_sec)       // starting row has to be at, or before, requested start
-	end_month := (end - 1) - ((end - 1) % cassandra.Month_sec) // ending row has to include the last point we might need (end-1)
-	startMonthNum := start_month / cassandra.Month_sec
-	endMonthNum := end_month / cassandra.Month_sec
-	rowKeys := make([]string, endMonthNum-startMonthNum+1)
+	startMonth := start / cassandra.Month_sec   // starting row has to be at, or before, requested start
+	endMonth := (end - 1) / cassandra.Month_sec // ending row has to include the last point we might need (end-1)
+	rowKeys := make([]string, endMonth-startMonth+1)
 
 	query := fmt.Sprintf("SELECT key, ts, data FROM %s WHERE key IN ? AND ts < ?", table.Name)
 
 	for _, metric := range metrics {
 		i := 0
-		for num := startMonthNum; num <= endMonthNum; num += 1 {
+		for num := startMonth; num <= endMonth; num += 1 {
 			rowKeys[i] = fmt.Sprintf("%s_%d", metric.AMKey, num)
 			i++
 		}
